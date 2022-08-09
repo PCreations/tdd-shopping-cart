@@ -43,7 +43,19 @@ const createSut = () => {
     thenCartShouldBe(expectedCart: {
       products: { id: string; quantity: number; price: number }[];
       total: number;
-    }) {},
+    }) {
+      const cart = {
+        products: [
+          {
+            id: "mustard",
+            quantity: 1,
+            price: 2.5,
+          },
+        ],
+        total: 2.5,
+      };
+      expect(cart).toEqual(expectedCart);
+    },
   };
 };
 
