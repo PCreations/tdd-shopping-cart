@@ -35,9 +35,18 @@ describe("Feature: Adding a product to the cart", () => {
 
 const createSut = () => {
   let addedProductId: string;
+  let existingProduct: { id: string; price: number };
+  let theCart: {
+    products: { id: string; quantity: number; price: number }[];
+    total: number;
+  };
   return {
-    givenExistingProduct(product: { id: string; price: number }) {},
-    givenCart(cart: { products: []; total: number }) {},
+    givenCart(cart: { products: []; total: number }) {
+      theCart = cart;
+    },
+    givenExistingProduct(product: { id: string; price: number }) {
+      existingProduct = product;
+    },
     async whenAddingProductInCart(addProductInCartRequest: {
       productId: string;
     }) {
@@ -50,9 +59,9 @@ const createSut = () => {
       const cart = {
         products: [
           {
-            id: addedProductId,
+            id: existingProduct.id,
             quantity: 1,
-            price: 2.5,
+            price: existingProduct.price,
           },
         ],
         total: 2.5,
