@@ -34,36 +34,33 @@ describe("Feature: Adding a product to the cart", () => {
 });
 
 const createSut = () => {
-  let addedProductId: string;
-  let existingProduct: { id: string; price: number };
   let theCart: {
     products: { id: string; quantity: number; price: number }[];
     total: number;
   };
+  let productsById = new Map<string, { id: string; price: number }>();
   return {
     givenCart(cart: { products: []; total: number }) {
       theCart = cart;
     },
     givenExistingProduct(product: { id: string; price: number }) {
-      existingProduct = product;
+      productsById.set(product.id, product);
     },
     async whenAddingProductInCart(addProductInCartRequest: {
       productId: string;
     }) {
-      addedProductId = addProductInCartRequest.productId;
+      const product = productsById.get(addProductInCartRequest.productId);
+      theCart.products.push({
+        ...product!,
+        quantity: 1,
+      });
     },
     thenCartShouldBe(expectedCart: {
       products: { id: string; quantity: number; price: number }[];
       total: number;
     }) {
       const cart = {
-        products: [
-          {
-            id: existingProduct.id,
-            quantity: 1,
-            price: existingProduct.price,
-          },
-        ],
+        ...theCart,
         total: 2.5,
       };
       expect(cart).toEqual(expectedCart);
