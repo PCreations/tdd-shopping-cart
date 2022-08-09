@@ -16,7 +16,7 @@ describe("Feature: Adding a product to the cart", () => {
       });
 
       await sut.whenAddingProductInCart({
-        id: "mustard",
+        productId: "mustard",
       });
 
       sut.thenCartShouldBe({
@@ -33,6 +33,18 @@ describe("Feature: Adding a product to the cart", () => {
   });
 });
 
-const createSut = () => {};
+const createSut = () => {
+  return {
+    givenExistingProduct(product: { id: string; price: number }) {},
+    async whenAddingProductInCart(addProductInCartRequest: {
+      productId: string;
+    }) {},
+    givenCart(cart: { products: []; total: number }) {},
+    thenCartShouldBe(expectedCart: {
+      products: { id: string; quantity: number; price: number }[];
+      total: number;
+    }) {},
+  };
+};
 
 type Sut = ReturnType<typeof createSut>;
