@@ -1,4 +1,9 @@
-import { AddProductToCart } from "../cart/usecases/add-product-to-cart.usecase";
+import { Cart } from "../cart/domain/cart";
+import { Product } from "../cart/domain/product";
+import {
+  AddProductCartRequest,
+  AddProductToCart,
+} from "../cart/usecases/add-product-to-cart.usecase";
 
 describe("Feature: Adding a product to the cart", () => {
   let sut: Sut;
@@ -24,7 +29,7 @@ describe("Feature: Adding a product to the cart", () => {
       sut.thenCartShouldBe({
         products: [
           {
-            id: "mustard",
+            productId: "mustard",
             quantity: 1,
             price: 2.5,
           },
@@ -36,35 +41,26 @@ describe("Feature: Adding a product to the cart", () => {
 });
 
 const createSut = () => {
-  let theCart: {
-    products: { id: string; quantity: number; price: number }[];
-    total: number;
-  };
-  let productsById = new Map<string, { id: string; price: number }>();
+  let theCart: Cart;
+  let productsById = new Map<string, Product>();
   const addProductToCart = new AddProductToCart(
     () => theCart,
     (productId: string) => productsById.get(productId)
   );
   return {
-    givenCart(cart: { products: []; total: number }) {
+    givenCart(cart: Cart) {
       theCart = cart;
     },
-    givenExistingProduct(product: { id: string; price: number }) {
+    givenExistingProduct(product: Product) {
       productsById.set(product.id, product);
     },
-    async whenAddingProductInCart(addProductInCartRequest: {
-      productId: string;
-    }) {
+    async whenAddingProductInCart(
+      addProductInCartRequest: AddProductCartRequest
+    ) {
       addProductToCart.handle(addProductInCartRequest);
     },
-    thenCartShouldBe(expectedCart: {
-      products: { id: string; quantity: number; price: number }[];
-      total: number;
-    }) {
-      const cart = {
-        ...theCart,
-        total: 2.5,
-      };
+    thenCartShouldBe(expectedCart: Cart) {
+      const cart = new Cart(theCart.products, 2.5);
       expect(cart).toEqual(expectedCart);
     },
   };
