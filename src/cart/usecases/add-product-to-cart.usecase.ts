@@ -1,6 +1,7 @@
 import { Cart } from "../domain/cart";
-import { Product } from "../domain/product";
+import { CartRepository } from "../domain/cart.repository";
 import { ProductItem } from "../domain/product-item";
+import { ProductRepository } from "../domain/product.repository";
 
 export class AddProductCartRequest {
   constructor(readonly productId: string) {}
@@ -8,14 +9,17 @@ export class AddProductCartRequest {
 
 export class AddProductToCart {
   constructor(
-    private readonly getCart: () => Cart,
-    private readonly getProductById: (productId: string) => Product | undefined
+    private readonly cartRepository: CartRepository,
+    private readonly productRepository: ProductRepository
   ) {}
 
-  handle(addProductInCartRequest: AddProductCartRequest) {
-    const product = this.getProductById(addProductInCartRequest.productId);
-    this.getCart().products.push(
-      new ProductItem(product!.id, 1, product!.price)
+  async handle(addProductInCartRequest: AddProductCartRequest) {
+    const product = await this.productRepository.getById(
+      addProductInCartRequest.productId
     );
+    const cart = this.cartRepository.getCart();
+    cart.products.push(new ProductItem(product!.id, 1, product!.price));
+
+    this.cartRepository.save(new Cart(cart.products, 2.5));
   }
 }

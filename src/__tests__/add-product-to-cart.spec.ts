@@ -1,5 +1,7 @@
 import { Cart } from "../cart/domain/cart";
 import { Product } from "../cart/domain/product";
+import { FakeCartRepository } from "../cart/infra/fake-cart.repository";
+import { FakeProductRepository } from "../cart/infra/fake-product.repository";
 import {
   AddProductCartRequest,
   AddProductToCart,
@@ -41,26 +43,26 @@ describe("Feature: Adding a product to the cart", () => {
 });
 
 const createSut = () => {
-  let theCart: Cart;
-  let productsById = new Map<string, Product>();
-  const addProductToCart = new AddProductToCart(
-    () => theCart,
-    (productId: string) => productsById.get(productId)
+  const cartRepository = new FakeCartRepository();
+  const productRepository = new FakeProductRepository();
+  const addProductInCart = new AddProductToCart(
+    cartRepository,
+    productRepository
   );
   return {
     givenCart(cart: Cart) {
-      theCart = cart;
+      cartRepository.givenCurrentCartIs(cart);
     },
     givenExistingProduct(product: Product) {
-      productsById.set(product.id, product);
+      productRepository.givenExistingProduct(product);
     },
     async whenAddingProductInCart(
       addProductInCartRequest: AddProductCartRequest
     ) {
-      addProductToCart.handle(addProductInCartRequest);
+      await addProductInCart.handle(addProductInCartRequest);
     },
     thenCartShouldBe(expectedCart: Cart) {
-      const cart = new Cart(theCart.products, 2.5);
+      const cart = cartRepository.getCart();
       expect(cart).toEqual(expectedCart);
     },
   };
