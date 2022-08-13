@@ -1,3 +1,5 @@
+import { AddProductToCart } from "../cart/usecases/add-product-to-cart.usecase";
+
 describe("Feature: Adding a product to the cart", () => {
   let sut: Sut;
 
@@ -39,6 +41,10 @@ const createSut = () => {
     total: number;
   };
   let productsById = new Map<string, { id: string; price: number }>();
+  const addProductToCart = new AddProductToCart(
+    () => theCart,
+    (productId: string) => productsById.get(productId)
+  );
   return {
     givenCart(cart: { products: []; total: number }) {
       theCart = cart;
@@ -49,11 +55,7 @@ const createSut = () => {
     async whenAddingProductInCart(addProductInCartRequest: {
       productId: string;
     }) {
-      const product = productsById.get(addProductInCartRequest.productId);
-      theCart.products.push({
-        ...product!,
-        quantity: 1,
-      });
+      addProductToCart.handle(addProductInCartRequest);
     },
     thenCartShouldBe(expectedCart: {
       products: { id: string; quantity: number; price: number }[];
