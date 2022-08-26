@@ -20,6 +20,11 @@ export class AddProductToCart {
     const cart = this.cartRepository.getCart();
     cart.products.push(new ProductItem(product!.id, 1, product!.price));
 
-    this.cartRepository.save(new Cart(cart.products, 2.5));
+    this.cartRepository.save(
+      new Cart(
+        cart.products,
+        cart.products.reduce((total, p) => total + p.price, 0)
+      )
+    );
   }
 }

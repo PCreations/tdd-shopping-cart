@@ -39,6 +39,47 @@ describe("Feature: Adding a product to the cart", () => {
         total: 2.5,
       });
     });
+
+    test('Example: Adding a "ketchup" at 2€ in the cart already containing one "mustard" at 2.5€', async () => {
+      sut.givenExistingProduct({
+        id: "mustard",
+        price: 2.5,
+      });
+      sut.givenExistingProduct({
+        id: "ketchup",
+        price: 2,
+      });
+      sut.givenCart({
+        products: [
+          {
+            price: 2.5,
+            productId: "mustard",
+            quantity: 1,
+          },
+        ],
+        total: 0,
+      });
+
+      await sut.whenAddingProductInCart({
+        productId: "ketchup",
+      });
+
+      sut.thenCartShouldBe({
+        products: [
+          {
+            productId: "mustard",
+            quantity: 1,
+            price: 2.5,
+          },
+          {
+            productId: "ketchup",
+            quantity: 1,
+            price: 2,
+          },
+        ],
+        total: 4.5,
+      });
+    });
   });
 });
 
