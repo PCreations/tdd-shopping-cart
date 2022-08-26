@@ -82,6 +82,54 @@ describe("Feature: Adding a product to the cart", () => {
           .build()
       );
     });
+
+    test('Example: Adding a second "ketchup" at 2€ in the cart already containing one "mustard" at 2.5€ and one "ketchup" at 2€', async () => {
+      sut.givenExistingProduct(
+        productBuilder().ofId("mustard").priced(2.5).build()
+      );
+      sut.givenExistingProduct(
+        productBuilder().ofId("ketchup").priced(2).build()
+      );
+      sut.givenCart(
+        cartBuilder()
+          .withProducts([
+            {
+              productId: "mustard",
+              quantity: 1,
+              price: 2.5,
+            },
+            {
+              productId: "ketchup",
+              quantity: 1,
+              price: 2,
+            },
+          ])
+          .withTotal(4.5)
+          .build()
+      );
+
+      await sut.whenAddingProductInCart({
+        productId: "ketchup",
+      });
+
+      sut.thenCartShouldBe(
+        cartBuilder()
+          .withProducts([
+            {
+              productId: "mustard",
+              quantity: 1,
+              price: 2.5,
+            },
+            {
+              productId: "ketchup",
+              quantity: 2,
+              price: 2,
+            },
+          ])
+          .withTotal(6.5)
+          .build()
+      );
+    });
   });
 });
 

@@ -18,12 +18,31 @@ export class AddProductToCart {
       addProductInCartRequest.productId
     );
     const cart = this.cartRepository.getCart();
-    cart.products.push(new ProductItem(product!.id, 1, product!.price));
+
+    const existingProductIndex = cart.products.findIndex(
+      (p) => p.productId === product!.id
+    );
+
+    if (existingProductIndex !== -1) {
+      const existingProductItem = cart.products.splice(
+        existingProductIndex,
+        1
+      )[0];
+      cart.products.push(
+        new ProductItem(
+          existingProductItem.productId,
+          existingProductItem.quantity + 1,
+          existingProductItem.price
+        )
+      );
+    } else {
+      cart.products.push(new ProductItem(product!.id, 1, product!.price));
+    }
 
     this.cartRepository.save(
       new Cart(
         cart.products,
-        cart.products.reduce((total, p) => total + p.price, 0)
+        cart.products.reduce((total, p) => total + p.price * p.quantity, 0)
       )
     );
   }
