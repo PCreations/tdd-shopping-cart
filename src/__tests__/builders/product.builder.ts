@@ -20,7 +20,7 @@ export const productBuilder = ({
       });
     },
     build() {
-      return new Product(props.id, props.price);
+      return Product.fromState(props);
     },
   };
 };

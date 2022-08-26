@@ -4,7 +4,7 @@ import { ProductItem } from "../../cart/domain/product-item";
 export const cartBuilder = ({
   products = [],
   total = 0,
-}: { products?: ProductItem[]; total?: number } = {}) => {
+}: { products?: ProductItem["state"][]; total?: number } = {}) => {
   const props = { products, total };
 
   return {
@@ -15,14 +15,10 @@ export const cartBuilder = ({
         total: 0,
       });
     },
-    withProducts(
-      productItems: { productId: string; price: number; quantity: number }[]
-    ) {
+    withProducts(productItems: ProductItem["state"][]) {
       return cartBuilder({
         ...props,
-        products: productItems.map(
-          (item) => new ProductItem(item.productId, item.quantity, item.price)
-        ),
+        products: productItems,
       });
     },
     withTotal(cartTotal: number) {
@@ -32,7 +28,7 @@ export const cartBuilder = ({
       });
     },
     build() {
-      return new Cart(props.products, props.total);
+      return Cart.fromState(props);
     },
   };
 };
