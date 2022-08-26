@@ -6,6 +6,8 @@ import {
   AddProductCartRequest,
   AddProductToCart,
 } from "../cart/usecases/add-product-to-cart.usecase";
+import { cartBuilder } from "./builders/cart.builder";
+import { productBuilder } from "./builders/product.builder";
 
 describe("Feature: Adding a product to the cart", () => {
   let sut: Sut;
@@ -15,70 +17,70 @@ describe("Feature: Adding a product to the cart", () => {
   });
   describe("Rule: Should add a quantity of one product when adding a product", () => {
     test('Example: Adding "mustard" at 2.5€ in the cart', async () => {
-      sut.givenExistingProduct({
-        id: "mustard",
-        price: 2.5,
-      });
-      sut.givenCart({
-        products: [],
-        total: 0,
-      });
+      sut.givenExistingProduct(
+        productBuilder().ofId("mustard").priced(2.5).build()
+      );
+      sut.givenCart(cartBuilder().empty().build());
 
       await sut.whenAddingProductInCart({
         productId: "mustard",
       });
 
-      sut.thenCartShouldBe({
-        products: [
-          {
-            productId: "mustard",
-            quantity: 1,
-            price: 2.5,
-          },
-        ],
-        total: 2.5,
-      });
+      sut.thenCartShouldBe(
+        cartBuilder()
+          .withProducts([
+            {
+              productId: "mustard",
+              quantity: 1,
+              price: 2.5,
+            },
+          ])
+          .withTotal(2.5)
+          .build()
+      );
     });
 
     test('Example: Adding a "ketchup" at 2€ in the cart already containing one "mustard" at 2.5€', async () => {
-      sut.givenExistingProduct({
-        id: "mustard",
-        price: 2.5,
-      });
-      sut.givenExistingProduct({
-        id: "ketchup",
-        price: 2,
-      });
-      sut.givenCart({
-        products: [
-          {
-            price: 2.5,
-            productId: "mustard",
-            quantity: 1,
-          },
-        ],
-        total: 0,
-      });
+      sut.givenExistingProduct(
+        productBuilder().ofId("mustard").priced(2.5).build()
+      );
+      sut.givenExistingProduct(
+        productBuilder().ofId("ketchup").priced(2).build()
+      );
+      sut.givenCart(
+        cartBuilder()
+          .withProducts([
+            {
+              productId: "mustard",
+              quantity: 1,
+              price: 2.5,
+            },
+          ])
+          .withTotal(2.5)
+          .build()
+      );
 
       await sut.whenAddingProductInCart({
         productId: "ketchup",
       });
 
-      sut.thenCartShouldBe({
-        products: [
-          {
-            productId: "mustard",
-            quantity: 1,
-            price: 2.5,
-          },
-          {
-            productId: "ketchup",
-            quantity: 1,
-            price: 2,
-          },
-        ],
-        total: 4.5,
-      });
+      sut.thenCartShouldBe(
+        cartBuilder()
+          .withProducts([
+            {
+              productId: "mustard",
+              quantity: 1,
+              price: 2.5,
+            },
+            {
+              productId: "ketchup",
+              quantity: 1,
+              price: 2,
+            },
+          ])
+          .withTotal(4.5)
+          .build()
+      );
     });
   });
 });
