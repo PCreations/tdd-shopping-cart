@@ -19,31 +19,8 @@ export class AddProductToCart {
     );
     const cart = this.cartRepository.getCart();
 
-    const existingProductIndex = cart.products.findIndex(
-      (p) => p.productId === product!.id
-    );
+    const updatedCart = cart.addProduct(product!);
 
-    if (existingProductIndex !== -1) {
-      const existingProductItem = cart.products.splice(
-        existingProductIndex,
-        1
-      )[0];
-      cart.products.push(
-        new ProductItem(
-          existingProductItem.productId,
-          existingProductItem.quantity + 1,
-          existingProductItem.price
-        )
-      );
-    } else {
-      cart.products.push(new ProductItem(product!.id, 1, product!.price));
-    }
-
-    this.cartRepository.save(
-      new Cart(
-        cart.products,
-        cart.products.reduce((total, p) => total + p.price * p.quantity, 0)
-      )
-    );
+    this.cartRepository.save(updatedCart);
   }
 }
