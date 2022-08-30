@@ -19,8 +19,8 @@ export class AddProductToCart {
     );
     const cart = this.cartRepository.getCart();
 
-    const updatedCart = cart.addProduct(product!);
+    cart.addProduct(product!);
 
-    this.cartRepository.save(updatedCart);
+    this.cartRepository.save(cart);
   }
 }
