@@ -1,6 +1,4 @@
-import { Cart } from "../domain/cart";
 import { CartRepository } from "../domain/cart.repository";
-import { ProductItem } from "../domain/product-item";
 import { ProductRepository } from "../domain/product.repository";
 
 export class AddProductCartRequest {
