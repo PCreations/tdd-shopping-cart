@@ -1,4 +1,4 @@
-# tdd-shoping-cart
+# tdd-shopping-cart
 
 DISCLAIMER : This is not a repository to show best practices with react and redux, just the way I do things. There are other ways. The same goes for the folder structure, I kept it very simple for the sake of example.
 
