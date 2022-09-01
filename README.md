@@ -25,3 +25,7 @@ Happy Coding :)
 # Slides
 
 You can find the slides here : https://docs.google.com/presentation/d/1_vKs6V56IFi4Jm9zYHbQ-bPwitDc19eXkBjpasXCpGc/edit?usp=sharing
+
+# Additional Links
+
+Dave Farley's video on the concept of creating an internal DSL for your tests : https://www.youtube.com/watch?v=JDD5EEJgpHU&ab_channel=ContinuousDelivery
