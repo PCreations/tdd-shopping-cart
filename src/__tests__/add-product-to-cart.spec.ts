@@ -1,13 +1,15 @@
 import { Cart } from "../cart/domain/cart";
 import { Product } from "../cart/domain/product";
-import { FakeCartRepository } from "../cart/infra/fake-cart.repository";
 import { FakeProductRepository } from "../cart/infra/fake-product.repository";
 import {
   AddProductCartRequest,
-  AddProductToCart,
+  addProductToCart,
 } from "../cart/usecases/add-product-to-cart.usecase";
+import { selectCart } from "../cart/usecases/cart.slice";
+import { AppStore } from "../store";
 import { cartBuilder } from "./builders/cart.builder";
 import { productBuilder } from "./builders/product.builder";
+import { storeBuilder as buildStore } from "./builders/store.builder";
 
 describe("Feature: Adding a product to the cart", () => {
   let sut: Sut;
@@ -134,15 +136,12 @@ describe("Feature: Adding a product to the cart", () => {
 });
 
 const createSut = () => {
-  const cartRepository = new FakeCartRepository();
   const productRepository = new FakeProductRepository();
-  const addProductInCart = new AddProductToCart(
-    cartRepository,
-    productRepository
-  );
+  let storeBuilder = buildStore().withProductRepository(productRepository);
+  let store: AppStore;
   return {
     givenCart(cart: Cart) {
-      cartRepository.givenCurrentCartIs(cart);
+      storeBuilder = storeBuilder.withCart(cart);
     },
     givenExistingProduct(product: Product) {
       productRepository.givenExistingProduct(product);
@@ -150,10 +149,11 @@ const createSut = () => {
     async whenAddingProductInCart(
       addProductInCartRequest: AddProductCartRequest
     ) {
-      await addProductInCart.handle(addProductInCartRequest);
+      store = storeBuilder.build();
+      await store.dispatch(addProductToCart(addProductInCartRequest));
     },
     thenCartShouldBe(expectedCart: Cart) {
-      const cart = cartRepository.getCart();
+      const cart = selectCart(store.getState());
       expect(cart).toEqual(expectedCart);
     },
   };

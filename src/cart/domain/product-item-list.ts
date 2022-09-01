@@ -1,9 +1,11 @@
-import { ProductItem } from "./product-item";
+import { ProductItem, ProductItemState } from "./product-item";
+
+export type ProductItemListState = ProductItemState[];
 
 export class ProductItemList {
   constructor(private readonly items: Map<string, ProductItem>) {}
 
-  static fromState(state: ProductItemList["state"]) {
+  static fromState(state: ProductItemListState) {
     const productItems = state.map(ProductItem.fromState);
 
     return new ProductItemList(
@@ -11,7 +13,7 @@ export class ProductItemList {
     );
   }
 
-  get state() {
+  get state(): ProductItemListState {
     return [...this.items.values()].map((i) => i.state);
   }
 

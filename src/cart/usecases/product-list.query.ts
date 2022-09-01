@@ -1,3 +1,13 @@
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import { ThunkExtraArg } from "../../store";
+
+export type ProductState = {
+  id: string;
+  price: number;
+  name: string;
+  description: string;
+};
+
 export class ProductList {
   constructor(
     readonly products: {
@@ -7,16 +17,24 @@ export class ProductList {
       description: string;
     }[]
   ) {}
+
+  get state() {
+    return {
+      products: this.products,
+    };
+  }
 }
 
 export type GetProductList = {
   (): Promise<ProductList>;
 };
 
-export class ProductListQuery {
-  constructor(private readonly getProductList: GetProductList) {}
+export const getProductList = createAsyncThunk<
+  ProductList["state"],
+  void,
+  { extra: ThunkExtraArg }
+>("products/getProductList", async (_, { extra }) => {
+  const productList = await extra.getProductList();
 
-  execute() {
-    return this.getProductList();
-  }
-}
+  return productList.state;
+});

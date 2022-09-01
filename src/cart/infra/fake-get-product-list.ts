@@ -1,7 +1,16 @@
-import { ProductList } from "../domain/product-list";
-import { GetProductList } from "../usecases/product-list.query";
+import { ProductList, GetProductList } from "../usecases/product-list.query";
 
 export const createFakeGetProductList =
-  (willReturnProductList: ProductList): GetProductList =>
-  () =>
-    Promise.resolve(willReturnProductList);
+  (
+    willReturnProductList: ProductList,
+    { delay = 0 }: { delay?: number } = {}
+  ): GetProductList =>
+  () => {
+    return new Promise((resolve) => {
+      if (delay === 0) {
+        resolve(willReturnProductList);
+        return;
+      }
+      setTimeout(() => resolve(willReturnProductList), delay);
+    });
+  };

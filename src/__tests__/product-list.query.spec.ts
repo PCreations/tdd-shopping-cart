@@ -1,9 +1,11 @@
 import { createFakeGetProductList } from "../cart/infra/fake-get-product-list";
 import {
   ProductList,
-  GetProductList,
-  ProductListQuery,
+  getProductList,
 } from "../cart/usecases/product-list.query";
+import { selectProductList } from "../cart/usecases/product.slice";
+import { AppStore } from "../store";
+import { storeBuilder } from "./builders/store.builder";
 
 describe("Feature: Retrieving products list", () => {
   let sut: Sut;
@@ -24,7 +26,7 @@ describe("Feature: Retrieving products list", () => {
         id: "ketchup",
         price: 2,
         name: "Ketchup",
-        description: "Ketchup with bio tomatos",
+        description: "Ketchup with bio tomatoes",
       },
     ]);
 
@@ -41,15 +43,14 @@ describe("Feature: Retrieving products list", () => {
         id: "ketchup",
         price: 2,
         name: "Ketchup",
-        description: "Ketchup with bio tomatos",
+        description: "Ketchup with bio tomatoes",
       },
     ]);
   });
 });
 
 const createSut = () => {
-  let getProductList: GetProductList;
-  let retrievedProductList: ProductList;
+  let store: AppStore;
   return {
     givenFollowingProductList(
       productList: {
@@ -59,11 +60,13 @@ const createSut = () => {
         name: string;
       }[]
     ) {
-      getProductList = createFakeGetProductList(new ProductList(productList));
+      const getProductList = createFakeGetProductList(
+        new ProductList(productList)
+      );
+      store = storeBuilder().withGetProductList(getProductList).build();
     },
     async whenRetrievingProductList() {
-      const productListQuery = new ProductListQuery(getProductList);
-      retrievedProductList = await productListQuery.execute();
+      return store.dispatch(getProductList());
     },
     thenProductListShouldBe(
       expectedProductList: {
@@ -73,6 +76,7 @@ const createSut = () => {
         name: string;
       }[]
     ) {
+      const retrievedProductList = selectProductList(store.getState());
       expect(retrievedProductList).toEqual(
         new ProductList(expectedProductList)
       );

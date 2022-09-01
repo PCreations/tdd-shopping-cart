@@ -1,5 +1,11 @@
 import { Product } from "./product";
 
+export type ProductItemState = {
+  productId: string;
+  quantity: number;
+  price: number;
+};
+
 export class ProductItem {
   constructor(
     readonly productId: string,
@@ -7,7 +13,7 @@ export class ProductItem {
     private readonly price: number
   ) {}
 
-  static fromState(state: ProductItem["state"]) {
+  static fromState(state: ProductItemState) {
     return new ProductItem(state.productId, state.quantity, state.price);
   }
 
@@ -19,7 +25,7 @@ export class ProductItem {
     this.quantity += 1;
   }
 
-  get state() {
+  get state(): ProductItemState {
     return {
       productId: this.productId,
       quantity: this.quantity,

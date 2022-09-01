@@ -1,6 +1,11 @@
 import { Product } from "./product";
 import { ProductItem } from "./product-item";
-import { ProductItemList } from "./product-item-list";
+import { ProductItemList, ProductItemListState } from "./product-item-list";
+
+export type CartState = {
+  products: ProductItemListState;
+  total: number;
+};
 
 export class Cart {
   constructor(
@@ -8,11 +13,11 @@ export class Cart {
     private total: number
   ) {}
 
-  static fromState(state: Cart["state"]) {
+  static fromState(state: CartState) {
     return new Cart(ProductItemList.fromState(state.products), state.total);
   }
 
-  get state() {
+  get state(): CartState {
     return {
       products: this.products.state,
       total: this.total,
