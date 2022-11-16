@@ -1,28 +1,24 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
-import { RootState, ThunkExtraArg } from "../../store";
-import { cartSlice, selectCart } from "./cart.slice";
+import { CartStore } from "../domain/cart.store";
+import { ProductItem } from "../domain/product-item";
 
-export class AddProductCartRequest {
-  constructor(readonly productId: string) {}
+export type AddProductCartRequest = {
+  productId: string;
+  price: number;
+};
+
+export class AddProductToCartUseCase {
+  constructor(private readonly cartStore: CartStore) {}
+
+  handle(request: AddProductCartRequest) {
+    const cart = this.cartStore.selectCart();
+    const productItem = ProductItem.fromData({
+      productId: request.productId,
+      price: request.price,
+      quantity: 1,
+    });
+
+    cart.addProductItem(productItem);
+
+    this.cartStore.setCart(cart);
+  }
 }
-
-export const addProductToCart = createAsyncThunk<
-  void,
-  AddProductCartRequest,
-  {
-    extra: ThunkExtraArg;
-    state: RootState;
-  }
->(
-  "cart/addProductToCart",
-  async (addProductInCartRequest, { extra, getState, dispatch }) => {
-    const product = await extra.productRepository.getById(
-      addProductInCartRequest.productId
-    );
-    const cart = selectCart(getState());
-
-    cart.addProduct(product!);
-
-    dispatch(cartSlice.actions.cartSaved({ cart: cart.state }));
-  }
-);

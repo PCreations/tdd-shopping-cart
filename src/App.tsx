@@ -1,55 +1,53 @@
-import { Provider } from "react-redux";
-import { Product } from "./cart/domain/product";
-import { createFakeGetProductList } from "./cart/infra/fake-get-product-list";
-import { FakeProductRepository } from "./cart/infra/fake-product.repository";
-import { ProductList as ProductListData } from "./cart/usecases/product-list.query";
+import { InMemoryCartStore } from "./cart/infra/inmemory.cart.store";
+import { AddProductToCartUseCase } from "./cart/usecases/add-product-to-cart.usecase";
+import { InMemoryCatalogStore } from "./catalog/infra/inmemory.catalog.store";
+import { GetProductListUseCase } from "./catalog/usecases/get-product-list.usecase";
 import { Cart } from "./presentation/cart/Cart";
 import { CartViewModel } from "./presentation/cart/cart.viewmodel";
 import { ProductListViewModel } from "./presentation/product-list/product-list.viewmodel";
 import { ProductList } from "./presentation/product-list/ProductList";
-import { createStore } from "./store";
+import { StubCatalogGateway } from "./__tests__/stub.catalog.gateway";
 
-const productRepository = new FakeProductRepository();
-const mustard = Product.fromState({
-  id: "mustard",
-  price: 2.5,
-});
-const ketchup = Product.fromState({
-  id: "ketchup",
-  price: 2,
-});
-productRepository.givenExistingProduct(mustard);
-productRepository.givenExistingProduct(ketchup);
-const productList = new ProductListData([
+const productList = [
   {
-    ...mustard.state,
+    id: "mustard",
+    price: 2.5,
     name: "Mustard",
     description: "Best Mustard In Town !",
   },
   {
-    ...ketchup.state,
+    id: "ketchup",
+    price: 2,
     name: "Ketchup",
     description: "Ketchup made with great tomatoes",
   },
-]);
+];
 
-const store = createStore({
-  productRepository,
-  getProductList: createFakeGetProductList(productList, { delay: 1000 }),
-});
+const catalogGateway = new StubCatalogGateway();
+catalogGateway.willReturnProductList = productList;
+catalogGateway.delayInMs = 1000;
+const catalogStore = new InMemoryCatalogStore();
+const cartStore = new InMemoryCartStore();
+const getProductListUseCase = new GetProductListUseCase(
+  catalogGateway,
+  catalogStore
+);
+const addProductToCartUseCase = new AddProductToCartUseCase(cartStore);
 
-const productListViewModel = new ProductListViewModel();
-const cartViewModel = new CartViewModel();
+const productListViewModel = new ProductListViewModel(
+  catalogStore,
+  getProductListUseCase,
+  addProductToCartUseCase
+);
+const cartViewModel = new CartViewModel(catalogStore, cartStore);
 
 const App = () => {
   return (
-    <Provider store={store}>
-      <div className="App">
-        <h1>Product List</h1>
-        <ProductList productListViewModel={productListViewModel} />
-        <Cart cartViewModel={cartViewModel} />
-      </div>
-    </Provider>
+    <div className="App">
+      <h1>Product List</h1>
+      <ProductList productListViewModel={productListViewModel} />
+      <Cart cartViewModel={cartViewModel} />
+    </div>
   );
 };
 

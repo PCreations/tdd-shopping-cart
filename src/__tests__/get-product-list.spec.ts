@@ -1,11 +1,6 @@
-import { createFakeGetProductList } from "../cart/infra/fake-get-product-list";
-import {
-  ProductList,
-  getProductList,
-} from "../cart/usecases/product-list.query";
-import { selectProductList } from "../cart/usecases/product.slice";
-import { AppStore } from "../store";
-import { storeBuilder } from "./builders/store.builder";
+import { InMemoryCatalogStore } from "../catalog/infra/inmemory.catalog.store";
+import { GetProductListUseCase } from "../catalog/usecases/get-product-list.usecase";
+import { StubCatalogGateway } from "./stub.catalog.gateway";
 
 describe("Feature: Retrieving products list", () => {
   let sut: Sut;
@@ -30,8 +25,10 @@ describe("Feature: Retrieving products list", () => {
       },
     ]);
 
-    await sut.whenRetrievingProductList();
+    const waitingForProducts = sut.whenRetrievingProductList();
 
+    sut.thenProductListShouldBeLoading();
+    await waitingForProducts;
     sut.thenProductListShouldBe([
       {
         id: "mustard",
@@ -46,11 +43,17 @@ describe("Feature: Retrieving products list", () => {
         description: "Ketchup with bio tomatoes",
       },
     ]);
+    sut.thenProductListShouldNotBeLoading();
   });
 });
 
 const createSut = () => {
-  let store: AppStore;
+  const catalogStore = new InMemoryCatalogStore();
+  const catalogGateway = new StubCatalogGateway();
+  const getProductListUseCase = new GetProductListUseCase(
+    catalogGateway,
+    catalogStore
+  );
   return {
     givenFollowingProductList(
       productList: {
@@ -60,13 +63,16 @@ const createSut = () => {
         name: string;
       }[]
     ) {
-      const getProductList = createFakeGetProductList(
-        new ProductList(productList)
-      );
-      store = storeBuilder().withGetProductList(getProductList).build();
+      catalogGateway.willReturnProductList = productList;
     },
     async whenRetrievingProductList() {
-      return store.dispatch(getProductList());
+      return getProductListUseCase.handle();
+    },
+    thenProductListShouldBeLoading() {
+      expect(catalogStore.areProductsLoading()).toBe(true);
+    },
+    thenProductListShouldNotBeLoading() {
+      expect(catalogStore.areProductsLoading()).toBe(false);
     },
     thenProductListShouldBe(
       expectedProductList: {
@@ -76,10 +82,8 @@ const createSut = () => {
         name: string;
       }[]
     ) {
-      const retrievedProductList = selectProductList(store.getState());
-      expect(retrievedProductList).toEqual(
-        new ProductList(expectedProductList)
-      );
+      const productList = catalogStore.selectProducts();
+      expect(productList).toEqual(expectedProductList);
     },
   };
 };

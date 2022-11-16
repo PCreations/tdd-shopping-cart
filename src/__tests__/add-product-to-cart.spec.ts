@@ -1,15 +1,10 @@
 import { Cart } from "../cart/domain/cart";
-import { Product } from "../cart/domain/product";
-import { FakeProductRepository } from "../cart/infra/fake-product.repository";
+import { InMemoryCartStore } from "../cart/infra/inmemory.cart.store";
 import {
   AddProductCartRequest,
-  addProductToCart,
+  AddProductToCartUseCase,
 } from "../cart/usecases/add-product-to-cart.usecase";
-import { selectCart } from "../cart/usecases/cart.slice";
-import { AppStore } from "../store";
 import { cartBuilder } from "./builders/cart.builder";
-import { productBuilder } from "./builders/product.builder";
-import { storeBuilder as buildStore } from "./builders/store.builder";
 
 describe("Feature: Adding a product to the cart", () => {
   let sut: Sut;
@@ -19,13 +14,11 @@ describe("Feature: Adding a product to the cart", () => {
   });
   describe("Rule: Should add a quantity of one product when adding a product", () => {
     test('Example: Adding "mustard" at 2.5€ in the cart', async () => {
-      sut.givenExistingProduct(
-        productBuilder().ofId("mustard").priced(2.5).build()
-      );
       sut.givenCart(cartBuilder().empty().build());
 
       await sut.whenAddingProductInCart({
         productId: "mustard",
+        price: 2.5,
       });
 
       sut.thenCartShouldBe(
@@ -43,12 +36,6 @@ describe("Feature: Adding a product to the cart", () => {
     });
 
     test('Example: Adding a "ketchup" at 2€ in the cart already containing one "mustard" at 2.5€', async () => {
-      sut.givenExistingProduct(
-        productBuilder().ofId("mustard").priced(2.5).build()
-      );
-      sut.givenExistingProduct(
-        productBuilder().ofId("ketchup").priced(2).build()
-      );
       sut.givenCart(
         cartBuilder()
           .withProducts([
@@ -64,6 +51,7 @@ describe("Feature: Adding a product to the cart", () => {
 
       await sut.whenAddingProductInCart({
         productId: "ketchup",
+        price: 2,
       });
 
       sut.thenCartShouldBe(
@@ -86,12 +74,6 @@ describe("Feature: Adding a product to the cart", () => {
     });
 
     test('Example: Adding a second "ketchup" at 2€ in the cart already containing one "mustard" at 2.5€ and one "ketchup" at 2€', async () => {
-      sut.givenExistingProduct(
-        productBuilder().ofId("mustard").priced(2.5).build()
-      );
-      sut.givenExistingProduct(
-        productBuilder().ofId("ketchup").priced(2).build()
-      );
       sut.givenCart(
         cartBuilder()
           .withProducts([
@@ -112,6 +94,7 @@ describe("Feature: Adding a product to the cart", () => {
 
       await sut.whenAddingProductInCart({
         productId: "ketchup",
+        price: 2,
       });
 
       sut.thenCartShouldBe(
@@ -136,24 +119,19 @@ describe("Feature: Adding a product to the cart", () => {
 });
 
 const createSut = () => {
-  const productRepository = new FakeProductRepository();
-  let storeBuilder = buildStore().withProductRepository(productRepository);
-  let store: AppStore;
+  const cartStore = new InMemoryCartStore();
+  const addProductToCartUseCase = new AddProductToCartUseCase(cartStore);
   return {
     givenCart(cart: Cart) {
-      storeBuilder = storeBuilder.withCart(cart);
-    },
-    givenExistingProduct(product: Product) {
-      productRepository.givenExistingProduct(product);
+      cartStore.setCart(cart);
     },
     async whenAddingProductInCart(
       addProductInCartRequest: AddProductCartRequest
     ) {
-      store = storeBuilder.build();
-      await store.dispatch(addProductToCart(addProductInCartRequest));
+      return addProductToCartUseCase.handle(addProductInCartRequest);
     },
     thenCartShouldBe(expectedCart: Cart) {
-      const cart = selectCart(store.getState());
+      const cart = cartStore.selectCart();
       expect(cart).toEqual(expectedCart);
     },
   };

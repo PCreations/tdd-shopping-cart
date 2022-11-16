@@ -1,17 +1,32 @@
-import { selectCart } from "../../cart/usecases/cart.slice";
-import { createSelectProductById } from "../../cart/usecases/product.slice";
-import { RootState } from "../../store";
+import { CartStore } from "../../cart/domain/cart.store";
+import { CatalogStore } from "../../catalog/domain/catalog.store";
+import { ViewModel } from "../view-model";
 
-export class CartViewModel {
-  selector(state: RootState) {
-    const cart = selectCart(state);
-    const products = cart.state.products.map((p) => {
-      const selectProductById = createSelectProductById(p.productId);
-      const product = selectProductById(state);
+export type CartViewData = {
+  products: {
+    id: string;
+    name: string;
+    price: string;
+    quantity: string;
+  }[];
+  total: string;
+};
+export class CartViewModel extends ViewModel<CartViewData> {
+  constructor(
+    private readonly catalogStore: CatalogStore,
+    private readonly cartStore: CartStore
+  ) {
+    super([catalogStore, cartStore]);
+  }
+
+  protected selector() {
+    const cart = this.cartStore.selectCart();
+    const products = cart.data.products.map((p) => {
+      const product = this.catalogStore.selectProductById(p.productId);
 
       return {
-        id: product?.id,
-        name: product?.name,
+        id: product!.id,
+        name: product!.name,
         price: `${product?.price}€`,
         quantity: `x ${p.quantity}`,
       };
@@ -19,7 +34,7 @@ export class CartViewModel {
 
     return {
       products,
-      total: `${cart.state.total}€`,
+      total: `${cart.data.total}€`,
     };
   }
 }

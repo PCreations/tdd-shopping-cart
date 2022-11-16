@@ -1,95 +1,116 @@
-import { createFakeGetProductList } from "../../../cart/infra/fake-get-product-list";
-import {
-  AddProductCartRequest,
-  addProductToCart,
-} from "../../../cart/usecases/add-product-to-cart.usecase";
-import { ProductList } from "../../../cart/usecases/product-list.query";
-import { storeBuilder } from "../../../__tests__/builders/store.builder";
+import { AddProductToCartUseCase } from "../../../cart/usecases/add-product-to-cart.usecase";
+import { CatalogStore } from "../../../catalog/domain/catalog.store";
+import { InMemoryCatalogStore } from "../../../catalog/infra/inmemory.catalog.store";
+import { GetProductListUseCase } from "../../../catalog/usecases/get-product-list.usecase";
 import { ProductListViewModel } from "../product-list.viewmodel";
 
-jest.mock("../../../cart/usecases/add-product-to-cart.usecase", () => {
-  const originalModule = jest.requireActual(
-    "../../../cart/usecases/add-product-to-cart.usecase"
-  );
-
-  return {
-    ...originalModule,
-    addProductToCart: jest.fn(),
-  };
-});
-
 describe("ProductListViewModel", () => {
+  const productList = [
+    {
+      id: "mustard",
+      price: 2.5,
+      name: "Mustard",
+      description: "Best mustard in town",
+    },
+    {
+      id: "ketchup",
+      price: 2,
+      name: "Ketchup",
+      description: "Ketchup with bio tomatos",
+    },
+  ];
+  let catalogStore: CatalogStore;
+  const getProductListUseCase = {
+    handle: jest.fn(),
+  } as unknown as GetProductListUseCase;
+  const addProductToCartUseCase = {
+    handle: jest.fn(),
+  } as unknown as AddProductToCartUseCase;
   beforeEach(() => {
     jest.resetAllMocks();
+    catalogStore = new InMemoryCatalogStore();
   });
-  it("should loads the product", async () => {
-    const productList = new ProductList([
-      {
-        id: "mustard",
-        price: 2.5,
-        name: "Mustard",
-        description: "Best mustard in town",
-      },
-      {
-        id: "ketchup",
-        price: 2,
-        name: "Ketchup",
-        description: "Ketchup with bio tomatos",
-      },
-    ]);
-    const store = storeBuilder()
-      .withGetProductList(createFakeGetProductList(productList))
-      .build();
-    const productListViewModel = new ProductListViewModel();
-    const initialViewModelState = productListViewModel.selector(
-      store.getState()
+  test("data while loading", (done) => {
+    catalogStore.setProductsLoading(true);
+    const productListViewModel = new ProductListViewModel(
+      catalogStore,
+      getProductListUseCase,
+      addProductToCartUseCase
     );
-    const getProductListPromise = productListViewModel.getProductList(
-      store.dispatch
-    );
-    const pendingState = productListViewModel.selector(store.getState());
-
-    await getProductListPromise;
-
-    const finalState = productListViewModel.selector(store.getState());
-    expect(initialViewModelState).toEqual({
-      loading: false,
-      products: [],
-    });
-    expect(pendingState).toEqual({
-      loading: true,
-      products: [],
-    });
-    expect(finalState).toEqual({
-      loading: false,
-      products: [
-        {
-          id: "mustard",
-          price: "2.5€",
-          name: "Mustard",
-          description: "Best mustard in town",
-        },
-        {
-          id: "ketchup",
-          price: "2€",
-          name: "Ketchup",
-          description: "Ketchup with bio tomatos",
-        },
-      ],
+    productListViewModel.subscribe((data) => {
+      try {
+        expect(data).toEqual({
+          loading: true,
+          products: [],
+        });
+      } finally {
+        done();
+      }
     });
   });
 
-  it("should add a product to cart", () => {
-    const productListViewModel = new ProductListViewModel();
-    const dispatch = jest.fn();
+  test("data once loaded", (done) => {
+    catalogStore.setProductsLoading(false);
+    catalogStore.addMany(productList);
+    const productListViewModel = new ProductListViewModel(
+      catalogStore,
+      getProductListUseCase,
+      addProductToCartUseCase
+    );
+    productListViewModel.subscribe((data) => {
+      try {
+        expect(data).toEqual({
+          loading: false,
+          products: [
+            {
+              id: "mustard",
+              price: "2.5€",
+              priceNumber: 2.5,
+              name: "Mustard",
+              description: "Best mustard in town",
+            },
+            {
+              id: "ketchup",
+              price: "2€",
+              priceNumber: 2,
+              name: "Ketchup",
+              description: "Ketchup with bio tomatos",
+            },
+          ],
+        });
+      } finally {
+        done();
+      }
+    });
+  });
 
-    productListViewModel.addProductToCart(dispatch, {
+  test("getProductList", () => {
+    const productListViewModel = new ProductListViewModel(
+      catalogStore,
+      getProductListUseCase,
+      addProductToCartUseCase
+    );
+
+    productListViewModel.getProductList();
+
+    expect(getProductListUseCase.handle).toHaveBeenCalledWith();
+  });
+
+  test("addProductToCart", () => {
+    const productListViewModel = new ProductListViewModel(
+      catalogStore,
+      getProductListUseCase,
+      addProductToCartUseCase
+    );
+
+    productListViewModel.addProductToCart({
       productId: "mustard-id",
+      price: 2.5,
     });
 
-    expect(dispatch).toHaveBeenCalled();
-    expect(addProductToCart).toHaveBeenCalledWith(
-      new AddProductCartRequest("mustard-id")
-    );
+    expect(addProductToCartUseCase.handle).toHaveBeenCalledWith({
+      productId: "mustard-id",
+      price: 2.5,
+    });
   });
 });

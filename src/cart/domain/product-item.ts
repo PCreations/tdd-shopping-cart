@@ -1,6 +1,4 @@
-import { Product } from "./product";
-
-export type ProductItemState = {
+export type ProductItemData = {
   productId: string;
   quantity: number;
   price: number;
@@ -10,22 +8,22 @@ export class ProductItem {
   constructor(
     readonly productId: string,
     private quantity: number,
-    private readonly price: number
+    private readonly _price: number
   ) {}
 
-  static fromState(state: ProductItemState) {
-    return new ProductItem(state.productId, state.quantity, state.price);
-  }
-
-  static ofProduct(product: Product) {
-    return new ProductItem(product.id, 1, product.price);
+  static fromData(data: ProductItemData) {
+    return new ProductItem(data.productId, data.quantity, data.price);
   }
 
   increaseQuantity() {
     this.quantity += 1;
   }
 
-  get state(): ProductItemState {
+  get price() {
+    return this._price;
+  }
+
+  get data(): ProductItemData {
     return {
       productId: this.productId,
       quantity: this.quantity,

@@ -28,7 +28,7 @@ export const cartBuilder = ({
       });
     },
     build() {
-      return Cart.fromState(props);
+      return Cart.fromData(props);
     },
   };
 };

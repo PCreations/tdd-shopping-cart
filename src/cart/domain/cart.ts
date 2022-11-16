@@ -1,9 +1,8 @@
-import { Product } from "./product";
 import { ProductItem } from "./product-item";
-import { ProductItemList, ProductItemListState } from "./product-item-list";
+import { ProductItemList, ProductItemListData } from "./product-item-list";
 
-export type CartState = {
-  products: ProductItemListState;
+export type CartData = {
+  products: ProductItemListData;
   total: number;
 };
 
@@ -13,20 +12,24 @@ export class Cart {
     private total: number
   ) {}
 
-  static fromState(state: CartState) {
-    return new Cart(ProductItemList.fromState(state.products), state.total);
+  static fromData(state: CartData) {
+    return new Cart(ProductItemList.fromData(state.products), state.total);
   }
 
-  get state(): CartState {
+  static initialize() {
+    return new Cart(ProductItemList.fromData([]), 0);
+  }
+
+  get data(): CartData {
     return {
-      products: this.products.state,
+      products: this.products.data,
       total: this.total,
     };
   }
 
-  addProduct(product: Product) {
-    this.products.addProductItem(ProductItem.ofProduct(product));
+  addProductItem(productItem: ProductItem) {
+    this.products.addProductItem(productItem);
 
-    this.total += product.price;
+    this.total += productItem.price;
   }
 }

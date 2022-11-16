@@ -1,36 +1,47 @@
-import {
-  AddProductCartRequest,
-  addProductToCart,
-} from "../../cart/usecases/add-product-to-cart.usecase";
-import { getProductList } from "../../cart/usecases/product-list.query";
-import {
-  selectIsProductListLoading,
-  selectProductList,
-} from "../../cart/usecases/product.slice";
-import { AppDispatch, RootState } from "../../store";
+import { AddProductToCartUseCase } from "../../cart/usecases/add-product-to-cart.usecase";
+import { CatalogStore } from "../../catalog/domain/catalog.store";
+import { GetProductListUseCase } from "../../catalog/usecases/get-product-list.usecase";
+import { ViewModel } from "../view-model";
 
-export class ProductListViewModel {
-  selector(state: RootState) {
-    const loading = selectIsProductListLoading(state);
-    const productList = selectProductList(state);
+export type ProductListViewData = {
+  loading: boolean;
+  products: {
+    id: string;
+    price: string;
+    priceNumber: number;
+    name: string;
+    description: string;
+  }[];
+};
+
+export class ProductListViewModel extends ViewModel<ProductListViewData> {
+  constructor(
+    private readonly catalogStore: CatalogStore,
+    private readonly getProductListUseCase: GetProductListUseCase,
+    private readonly addProductToCartUseCase: AddProductToCartUseCase
+  ) {
+    super([catalogStore]);
+  }
+
+  protected selector(): ProductListViewData {
+    const loading = this.catalogStore.areProductsLoading();
+    const products = this.catalogStore.selectProducts();
 
     return {
       loading,
-      products: productList.products.map((p) => ({
+      products: products.map((p) => ({
         ...p,
         price: `${p.price}€`,
+        priceNumber: p.price,
       })),
     };
   }
 
-  getProductList(dispatch: AppDispatch) {
-    return dispatch(getProductList());
+  getProductList() {
+    return this.getProductListUseCase.handle();
   }
 
-  addProductToCart(
-    dispatch: AppDispatch,
-    { productId }: { productId: string }
-  ) {
-    return dispatch(addProductToCart(new AddProductCartRequest(productId)));
+  addProductToCart({ productId, price }: { productId: string; price: number }) {
+    return this.addProductToCartUseCase.handle({ productId, price });
   }
 }
